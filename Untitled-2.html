@@ -1,0 +1,303 @@
+<!DOCTYPE html>
+<html lang="ar" class="h-full">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>لعبة المقابلات الوظيفية</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;700&display=swap');
+
+        body {
+            font-family: 'Inter', sans-serif;
+            direction: rtl;
+            /* Set direction to right-to-left for Arabic */
+        }
+    </style>
+</head>
+
+<body class="bg-gray-100 flex items-center justify-center min-h-screen p-4">
+
+    <!-- Game Container -->
+    <div id="game-container" class="bg-white p-8 rounded-2xl shadow-xl max-w-lg w-full text-center">
+        <!-- Start Screen -->
+        <div id="start-screen" class="text-center transition-opacity duration-500 ease-in-out">
+            <h1 class="text-3xl sm:text-4xl font-bold text-gray-800 mb-4">
+                لعبة المقابلات الوظيفية
+            </h1>
+            <p class="text-base sm:text-lg text-gray-600 mb-8">
+                تعلم 25 جملة أساسية باللغة الإنجليزية لمقابلات العمل من خلال لعبة ممتعة.
+            </p>
+            <button id="start-button"
+                class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-8 rounded-full text-lg shadow-lg transform transition-all duration-300 ease-in-out hover:scale-105">
+                ابدأ اللعبة
+            </button>
+        </div>
+
+        <!-- Main Game Screen -->
+        <div id="main-game" class="hidden transition-opacity duration-500 ease-in-out">
+            <!-- Progress Tracker -->
+            <div id="progress" class="text-sm text-gray-500 mb-4">
+                الجملة <span id="current-index">1</span> من <span id="total-sentences">25</span>
+            </div>
+
+            <!-- Sentence and Audio -->
+            <div class="bg-gray-50 p-6 rounded-2xl mb-6 border border-gray-200">
+                <p id="sentence-display" class="text-2xl sm:text-3xl font-bold text-gray-800 mb-4 text-left">
+                    "الجملة ستظهر هنا."
+                </p>
+                <button id="play-audio-button"
+                    class="bg-blue-500 hover:bg-blue-600 text-white w-12 h-12 rounded-full inline-flex items-center justify-center shadow-md transform transition-all duration-300 ease-in-out hover:scale-110">
+                    <span class="text-xl">🔊</span>
+                </button>
+            </div>
+
+            <!-- Vocabulary Section -->
+            <div id="vocabulary-section" class="mb-6">
+                <button id="toggle-vocab-button"
+                    class="bg-gray-200 hover:bg-gray-300 text-gray-700 font-bold py-2 px-6 rounded-full text-sm sm:text-base transition-colors duration-300 ease-in-out">
+                    إظهار الكلمات الهامة
+                </button>
+                <div id="vocab-list" class="mt-4 p-4 bg-gray-50 rounded-lg border border-gray-200 hidden text-right">
+                    <h3 class="font-bold text-lg mb-2 text-gray-800">مخزون الكلمات:</h3>
+                    <ul id="vocab-items" class="list-disc pr-6 space-y-2">
+                        <!-- Vocabulary items will be injected here -->
+                    </ul>
+                </div>
+            </div>
+
+            <!-- Navigation Buttons -->
+            <div class="flex justify-between items-center mt-6">
+                <button id="previous-button"
+                    class="bg-gray-400 hover:bg-gray-500 text-white font-bold py-3 px-6 rounded-full text-lg shadow-lg transform transition-all duration-300 ease-in-out hover:scale-105 opacity-50 cursor-not-allowed"
+                    disabled>
+                    السابق
+                </button>
+                <button id="next-button"
+                    class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-6 rounded-full text-lg shadow-lg transform transition-all duration-300 ease-in-out hover:scale-105">
+                    التالي
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const startScreen = document.getElementById('start-screen');
+            const mainGame = document.getElementById('main-game');
+            const startButton = document.getElementById('start-button');
+            const sentenceDisplay = document.getElementById('sentence-display');
+            const playAudioButton = document.getElementById('play-audio-button');
+            const toggleVocabButton = document.getElementById('toggle-vocab-button');
+            const vocabList = document.getElementById('vocab-list');
+            const vocabItems = document.getElementById('vocab-items');
+            const nextButton = document.getElementById('next-button');
+            const previousButton = document.getElementById('previous-button');
+            const currentIndexDisplay = document.getElementById('current-index');
+            const totalSentencesDisplay = document.getElementById('total-sentences');
+
+            let currentSentenceIndex = 0;
+            const sentences = [
+                {
+                    englishSentence: "Tell me about yourself.",
+                    vocabulary: [{ word: "Tell me", translation: "أخبرني" }, { word: "yourself", translation: "نفسك" }]
+                },
+                {
+                    englishSentence: "Why are you interested in this position?",
+                    vocabulary: [{ word: "interested", translation: "مهتم" }, { word: "position", translation: "منصب / وظيفة" }]
+                },
+                {
+                    englishSentence: "What are your greatest strengths?",
+                    vocabulary: [{ word: "greatest", translation: "أعظم" }, { word: "strengths", translation: "نقاط القوة" }]
+                },
+                {
+                    englishSentence: "What are your greatest weaknesses?",
+                    vocabulary: [{ word: "weaknesses", translation: "نقاط الضعف" }]
+                },
+                {
+                    englishSentence: "Where do you see yourself in five years?",
+                    vocabulary: [{ word: "see yourself", translation: "ترى نفسك" }, { word: "five years", translation: "خمس سنوات" }]
+                },
+                {
+                    englishSentence: "Why should we hire you?",
+                    vocabulary: [{ word: "hire", translation: "نوظف" }]
+                },
+                {
+                    englishSentence: "What do you know about our company?",
+                    vocabulary: [{ word: "know about", translation: "تعرف عن" }, { word: "company", translation: "شركة" }]
+                },
+                {
+                    englishSentence: "Do you have any questions for us?",
+                    vocabulary: [{ word: "questions", translation: "أسئلة" }]
+                },
+                {
+                    englishSentence: "What are your salary expectations?",
+                    vocabulary: [{ word: "salary", translation: "راتب" }, { word: "expectations", translation: "توقعات" }]
+                },
+                {
+                    englishSentence: "How do you handle pressure?",
+                    vocabulary: [{ word: "handle", translation: "تتعامل مع" }, { word: "pressure", translation: "الضغط" }]
+                },
+                {
+                    englishSentence: "Describe a difficult situation you've faced at work.",
+                    vocabulary: [{ word: "describe", translation: "صف" }, { word: "difficult situation", translation: "وضع صعب" }, { word: "faced", translation: "واجهت" }]
+                },
+                {
+                    englishSentence: "What motivates you?",
+                    vocabulary: [{ word: "motivates", translation: "يحفزك" }]
+                },
+                {
+                    englishSentence: "Are you a team player?",
+                    vocabulary: [{ word: "team player", translation: "لاعب فريق" }]
+                },
+                {
+                    englishSentence: "How do you stay updated on industry trends?",
+                    vocabulary: [{ word: "updated", translation: "محدثاً" }, { word: "industry trends", translation: "اتجاهات الصناعة" }]
+                },
+                {
+                    englishSentence: "What are your hobbies outside of work?",
+                    vocabulary: [{ word: "hobbies", translation: "هوايات" }, { word: "outside of work", translation: "خارج العمل" }]
+                },
+                {
+                    englishSentence: "What kind of work environment do you prefer?",
+                    vocabulary: [{ word: "work environment", translation: "بيئة عمل" }, { word: "prefer", translation: "تفضل" }]
+                },
+                {
+                    englishSentence: "How do you prioritize your tasks?",
+                    vocabulary: [{ word: "prioritize", translation: "ترتب أولويات" }, { word: "tasks", translation: "مهام" }]
+                },
+                {
+                    englishSentence: "What's a major accomplishment you're proud of?",
+                    vocabulary: [{ word: "major", translation: "رئيسي" }, { word: "accomplishment", translation: "إنجاز" }, { word: "proud of", translation: "فخور بـ" }]
+                },
+                {
+                    englishSentence: "How do you handle conflict with a colleague?",
+                    vocabulary: [{ word: "handle", translation: "تتعامل مع" }, { word: "conflict", translation: "صراع" }, { word: "colleague", translation: "زميل" }]
+                },
+                {
+                    englishSentence: "What makes you a good fit for this role?",
+                    vocabulary: [{ word: "good fit", translation: "مناسب" }, { word: "role", translation: "دور" }]
+                },
+                {
+                    englishSentence: "Tell me about a time you failed and what you learned from it.",
+                    vocabulary: [{ word: "failed", translation: "فشلت" }, { word: "learned from", translation: "تعلمت من" }]
+                },
+                {
+                    englishSentence: "How do you receive feedback?",
+                    vocabulary: [{ word: "receive", translation: "تتلقى" }, { word: "feedback", translation: "ملاحظات" }]
+                },
+                {
+                    englishSentence: "What are your career goals?",
+                    vocabulary: [{ word: "career goals", translation: "أهداف مهنية" }]
+                },
+                {
+                    englishSentence: "Can you describe your ideal job?",
+                    vocabulary: [{ word: "describe", translation: "تصف" }, { word: "ideal job", translation: "وظيفة مثالية" }]
+                },
+                {
+                    englishSentence: "Is there anything else you would like to add?",
+                    vocabulary: [{ word: "anything else", translation: "أي شيء آخر" }, { word: "add", translation: "تضيف" }]
+                }
+            ];
+
+            // Variable to hold the selected voice
+            let femaleVoice = null;
+
+            // Function to find a clear female voice from the available voices
+            const findFemaleVoice = () => {
+                const voices = window.speechSynthesis.getVoices();
+                // We'll prioritize finding a female voice in US English, but fall back to any US English voice
+                femaleVoice = voices.find(voice => voice.lang === 'en-US' && voice.name.toLowerCase().includes('female')) ||
+                    voices.find(voice => voice.lang === 'en-US' && (voice.name.includes('Google') || voice.name.includes('Zira'))) ||
+                    voices.find(voice => voice.lang === 'en-US'); // Fallback to any en-US voice
+            };
+
+            // This event fires when voices are loaded and available
+            window.speechSynthesis.onvoiceschanged = findFemaleVoice;
+            findFemaleVoice(); // Call it once in case voices are already loaded
+
+            // Use the Web Speech API for audio synthesis
+            const speakSentence = (text) => {
+                const utterance = new SpeechSynthesisUtterance(text);
+                if (femaleVoice) {
+                    utterance.voice = femaleVoice;
+                }
+                utterance.lang = 'en-US';
+                window.speechSynthesis.speak(utterance);
+            };
+
+            const updateUI = () => {
+                const currentSentence = sentences[currentSentenceIndex];
+                sentenceDisplay.textContent = `"${currentSentence.englishSentence}"`;
+                currentIndexDisplay.textContent = currentSentenceIndex + 1;
+                totalSentencesDisplay.textContent = sentences.length;
+
+                // Update vocabulary list
+                vocabItems.innerHTML = '';
+                currentSentence.vocabulary.forEach(item => {
+                    const li = document.createElement('li');
+                    li.innerHTML = `<strong>${item.word}:</strong> ${item.translation}`;
+                    vocabItems.appendChild(li);
+                });
+
+                // Update button states
+                if (currentSentenceIndex === 0) {
+                    previousButton.disabled = true;
+                    previousButton.classList.add('opacity-50', 'cursor-not-allowed');
+                } else {
+                    previousButton.disabled = false;
+                    previousButton.classList.remove('opacity-50', 'cursor-not-allowed');
+                }
+
+                if (currentSentenceIndex === sentences.length - 1) {
+                    nextButton.textContent = "أعد اللعبة";
+                    nextButton.classList.remove('bg-blue-600', 'hover:bg-blue-700');
+                    nextButton.classList.add('bg-green-600', 'hover:bg-green-700');
+                } else {
+                    nextButton.textContent = "التالي";
+                    nextButton.classList.remove('bg-green-600', 'hover:bg-green-700');
+                    nextButton.classList.add('bg-blue-600', 'hover:bg-blue-700');
+                }
+
+                // Hide vocabulary list when changing sentences
+                vocabList.classList.add('hidden');
+                toggleVocabButton.textContent = "إظهار الكلمات الهامة";
+            };
+
+            startButton.addEventListener('click', () => {
+                startScreen.classList.add('hidden');
+                mainGame.classList.remove('hidden');
+                updateUI();
+            });
+
+            playAudioButton.addEventListener('click', () => {
+                const currentSentence = sentences[currentSentenceIndex].englishSentence;
+                speakSentence(currentSentence);
+            });
+
+            toggleVocabButton.addEventListener('click', () => {
+                const isHidden = vocabList.classList.toggle('hidden');
+                toggleVocabButton.textContent = isHidden ? "إظهار الكلمات الهامة" : "إخفاء الكلمات";
+            });
+
+            nextButton.addEventListener('click', () => {
+                if (currentSentenceIndex < sentences.length - 1) {
+                    currentSentenceIndex++;
+                } else {
+                    currentSentenceIndex = 0; // Loop back to the beginning
+                }
+                updateUI();
+            });
+
+            previousButton.addEventListener('click', () => {
+                if (currentSentenceIndex > 0) {
+                    currentSentenceIndex--;
+                    updateUI();
+                }
+            });
+        });
+    </script>
+</body>
+
+</html>
